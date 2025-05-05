@@ -1,10 +1,11 @@
-// @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig } from "astro/config";
 
-// https://astro.build/config
 export default defineConfig({
-    output: 'static',
-   // opcional:
-  site: 'https://adn.github.io/astro-taxonomia-md'
-  
+  output: "static",
+  // si eliges servir desde docs/:
+  build: {
+    dist: "docs",
+  },
+  // opcional:
+  site: "https://adn.github.io/astro-taxonomia-md",
 });
