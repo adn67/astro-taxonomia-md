@@ -1,0 +1,35 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { slugify } from "../utils/slugify";
+
+
+// Mostramos solo los que no tienen parent (nivel raíz)
+
+const all = await getCollection('taxonomia');
+const ordenes = all.filter((entry) => entry.data.rank === 'orden');
+
+//const topLevel = all.filter((entry) => !entry.data.parent);
+const topLevel = ordenes; // se puede aplicar un filtro adicional si queremos limitarlo a coníferas, por ejemplo.
+---
+
+<Layout title="Taxonomía botánica">
+  <h1>Taxonomía botánica</h1>
+  <p>Exploremos las divisiones principales del reino vegetal.</p>
+
+  <ul>
+    {topLevel.map((item) => (
+      <li>
+        <a href={`/taxonomia/orden/${slugify(item.data.name)}`}>{item.data.name}</a>
+      </li>
+    ))}
+  </ul>
+</Layout>
+
+
+<!-- 
+Ya que index.astro será la página de inicio, podemos usarla para mostrar el primer nivel taxonómico (por ejemplo: el orden Pinales o incluso la división Spermatophyta, si deseamos empezar más arriba).
+ 
+Si en lugar de “orden” preferimos mostrar otro nivel taxonómico (division, clase, etc.), simplemente habrá que ajustar la ruta de salida y el filtro si corresponde.
+-->
+

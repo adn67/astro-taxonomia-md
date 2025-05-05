@@ -1,0 +1,19 @@
+---
+import type { Rank } from "../utils/rankLabels";
+import { RANK_LABELS } from '../utils/rankLabels';
+
+interface Props {
+  rank: Rank;
+}
+
+const { rank } = Astro.props;
+const metadata = RANK_LABELS[rank];
+---
+
+{metadata && (
+  <span
+    style={`background-color: ${metadata.color}; color: white; padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 0.9em;`}
+  >
+    {metadata.short}
+  </span>
+)}

@@ -1,0 +1,89 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Breadcrumb from "../../../components/Breadcrumb.astro";
+import RankTag from "../../../components/RankTag.astro";
+import { getCollection, getEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import { slugify } from "../../../utils/slugify";
+//import type { Rank } from '../../../utils/rankLabels';
+
+// Generación de rutas estáticas para cada familia
+export async function getStaticPaths() {
+  const entries = await getCollection("taxonomia");
+  return entries
+    .filter((entry) => entry.data.rank === "familia")
+    .map((entry) => ({
+      params: { slug: entry.slug },
+    }));
+}
+
+// Obtenemos el slug de la URL y tipamos correctamente
+const { slug } = Astro.params as { slug: string };
+
+// Recuperamos el taxón actual y validamos su existencia
+type Taxon = CollectionEntry<"taxonomia">;
+const current = (await getEntry("taxonomia", slug)) as Taxon;
+if (!current) {
+  throw new Error(`No se encontró la familia: ${slug}`);
+}
+
+// Obtenemos todos los taxones para construir la jerarquía y los hijos
+const allTaxa = (await getCollection("taxonomia")) as Taxon[];
+
+// Función para construir la cadena de padres
+// Construir cadena de padres slugificando parent antes de buscar
+function buildParentChain(entry: Taxon): Taxon[] {
+  const chain: Taxon[] = [];
+  // Transformamos el parent a slug
+  let parentSlug = entry.data.parent ? slugify(entry.data.parent) : null;
+  while (parentSlug) {
+    const parentEntry = allTaxa.find((t) => t.slug === parentSlug);
+    if (!parentEntry) break;
+    chain.unshift(parentEntry);
+    // Preparamos el siguiente parentSlug igualmente slugificado
+    parentSlug = parentEntry.data.parent
+      ? slugify(parentEntry.data.parent)
+      : null;
+  }
+  return chain;
+}
+
+// verificar la línea siguiente:
+const parentChain = buildParentChain(current);
+
+// Filtramos los hijos directos
+// Filtrar hijos directos usando slugified parent
+const children = allTaxa.filter(
+  (t) => t.data.parent !== undefined && slugify(t.data.parent) === current.slug
+);
+---
+
+<Layout title={current.data.name}>
+  <!-- Breadcrumb con taxón actual y sus padres -->
+  <Breadcrumb current={current} parents={parentChain} />
+
+  <!-- Título y etiqueta de rango -->
+  <h1>{current.data.name}</h1>
+  <RankTag rank={current.data.rank} />
+
+  <!-- Contenido principal del taxón -->
+  <div set:html={current.body} />
+
+  <!-- Listado de subniveles (hijos) si existen -->
+  {
+    children.length > 0 && (
+      <>
+        <h2>Subniveles</h2>
+        <ul>
+          {children.map((child) => (
+            <li>
+              <a href={`/taxonomia/${child.data.rank}/${child.slug}`}>
+                {child.data.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</Layout>
