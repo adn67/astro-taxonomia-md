@@ -5,9 +5,10 @@ import RankTag from "../../../components/RankTag.astro";
 import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { slugify } from "../../../utils/slugify";
-//import type { Rank } from '../../../utils/rankLabels';
 
-// Generación de rutas estáticas para cada orden
+// ---------------------------
+// 1) getStaticPaths: generar rutas estáticas solo para órdenes
+// ---------------------------
 export async function getStaticPaths() {
   const entries = await getCollection("taxonomia");
   return entries
@@ -17,59 +18,90 @@ export async function getStaticPaths() {
     }));
 }
 
-// Obtenemos el slug de la URL y tipamos correctamente
+// ---------------------------
+// 2) Recuperar el slug de la URL
+// ---------------------------
 const { slug } = Astro.params as { slug: string };
 
-// Recuperamos el taxón actual y validamos su existencia
+// ---------------------------
+// 3) Tipado genérico para el contenido
+// ---------------------------
 type Taxon = CollectionEntry<"taxonomia">;
+
+// ---------------------------
+// 4) Obtener la entrada actual y validar
+// ---------------------------
 const current = (await getEntry("taxonomia", slug)) as Taxon;
 if (!current) {
   throw new Error(`No se encontró el orden: ${slug}`);
 }
 
-// Obtenemos todos los taxones para construir la jerarquía y los hijos
+// ---------------------------
+// 5) Renderizar el cuerpo Markdown como componente (<Content />)
+//    Esto transforma el cuerpo del archivo .md en HTML.
+// Convierte el Markdown en un componente que respeta todos los bloques de código, listas, títulos (#, ##), saltos de línea, etc.
+// ---------------------------
+const { Content } = await current.render();
+
+// ---------------------------
+// 6) Cargar todos los taxones para navegar jerarquía
+// ---------------------------
 const allTaxa = (await getCollection("taxonomia")) as Taxon[];
 
-// Función para construir la cadena de padres
-// Construir cadena de padres slugificando parent antes de buscar
+// ---------------------------
+// 7) Construir la cadena de padres (jerarquía ascendente):
+//      buildParentChain slugifica el campo parent al buscar en allTaxa,
+//      pasa current y parentChain a <Breadcrumb />
+// ---------------------------
 function buildParentChain(entry: Taxon): Taxon[] {
   const chain: Taxon[] = [];
-  // Transformamos el parent a slug
+  // Partimos de entry.data.parent (nombre “Pinales”, “Pinaceae”, etc.)
   let parentSlug = entry.data.parent ? slugify(entry.data.parent) : null;
   while (parentSlug) {
     const parentEntry = allTaxa.find((t) => t.slug === parentSlug);
     if (!parentEntry) break;
+    // Insertamos al inicio para que la jerarquía quede en orden
     chain.unshift(parentEntry);
-    // Preparamos el siguiente parentSlug igualmente slugificado
+    // Preparamos el siguiente parentSlug (slugified)
     parentSlug = parentEntry.data.parent
       ? slugify(parentEntry.data.parent)
       : null;
   }
   return chain;
 }
-
-// verificar la línea siguiente:
 const parentChain = buildParentChain(current);
 
-// Filtramos los hijos directos
-// Filtrar hijos directos usando slugified parent
+// ---------------------------
+// 8) Filtrar hijos directos
+// ---------------------------
 const children = allTaxa.filter(
   (t) => t.data.parent !== undefined && slugify(t.data.parent) === current.slug
 );
 ---
 
 <Layout title={current.data.name}>
-  <!-- Breadcrumb con taxón actual y sus padres -->
+  <!-- Breadcrumb con la jerarquía completa -->
   <Breadcrumb current={current} parents={parentChain} />
 
-  <!-- Título y etiqueta de rango -->
+  <!-- Título y rango estilizado -->
   <h1>{current.data.name}</h1>
   <RankTag rank={current.data.rank} />
 
-  <!-- Contenido principal del taxón -->
-  <div set:html={current.body} />
+  <!-- Notas (si existen) -->
+  {
+    current.data.notes && (
+      <p>
+        <em>{current.data.notes}</em>
+      </p>
+    )
+  }
 
-  <!-- Listado de subniveles (hijos) si existen -->
+  <!--  Renderizado real de tu Markdown   -->
+  <article>
+    <Content />
+  </article>
+
+  <!-- Si hubiera hijos (por ejemplo familias), los listamos -->
   {
     children.length > 0 && (
       <>

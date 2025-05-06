@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:gh": "npm run build && rm -rf docs && mv dist docs",
     "preview": "astro preview",
     "astro": "astro",
     "deploy:gh": "npm run build"
