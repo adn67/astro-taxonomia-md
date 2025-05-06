@@ -30,7 +30,7 @@ jobs:
         run: mv dist docs
 
       - name: Subir archivos generados
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sitio-astro
           path: docs/
