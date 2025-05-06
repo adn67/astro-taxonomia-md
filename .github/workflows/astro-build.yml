@@ -34,6 +34,7 @@ jobs:
         with:
           name: sitio-astro
           path: docs/
+          retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
