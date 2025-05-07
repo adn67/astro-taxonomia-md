@@ -1,0 +1,11 @@
+<!-- 
+---
+title: Nombre científico completo (Mayúscula, en *itálicas*)
+name: Nombre base del taxón (Mayúscula, sin autor)
+slug: slug-del-taxon
+rank: orden | familia | genero | especie
+parent: Nombre científico del taxón padre
+plural: Plural del subnivel (si aplica)
+order: Número para ordenar si lo necesitás (opcional)
+--- 
+-->

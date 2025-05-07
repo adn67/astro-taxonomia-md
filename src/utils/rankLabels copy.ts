@@ -93,7 +93,7 @@ export const RANK_METADATA: Record<TaxonRank, RankMetadata> = {
 
 // src/utils/rankLabels.ts
 
-export type Rank = 'division' | 'orden' | 'familia' | 'genero' | 'especie';
+/* export type Rank = 'division' | 'orden' | 'familia' | 'genero' | 'especie';
 
 interface RankMetadata {
   label: string;
@@ -108,3 +108,4 @@ export const RANK_LABELS: Record<Rank, RankMetadata> = {
   genero:   { label: 'Género',   short: 'Gen.', color: '#9f7aea' }, // purple
   especie:  { label: 'Especie',  short: 'Esp.', color: '#f56565' }, // red
 };
+ */

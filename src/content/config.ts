@@ -8,7 +8,7 @@ Este archivo:
 
 /* 
 
-versión de config.ts para la estructura:
+1. versión de config.ts para la estructura:
 
 src/
   content/
@@ -44,7 +44,7 @@ export const collections = {
  */
 
 
-/* versión de config.ts para proyecto con la siguiente estructura: 
+/* 2. versión de config.ts para proyecto con la siguiente estructura: 
 
 src/
   content/
@@ -62,15 +62,22 @@ import { defineCollection, z } from 'astro:content';
 
 const taxonomia = defineCollection({
   schema: z.object({
-    name: z.string(),
-    rank: z.enum(['orden', 'familia', 'genero', 'especie']),
-    parent: z.string().optional(),
-    notes: z.string().optional(),
+    name: z.string(),  // Nombre principal del taxón
+    rank: z.enum(['division', 'orden', 'familia', 'genero', 'especie']),
+    parent: z.string().optional(),  // Slug del taxón superior
+    notes: z.string().optional(),   // Notas breves o aclaraciones
+
+    // Campos adicionales opcionales y extensibles
+    nombre_cientifico: z.string().optional(),  // Nombre científico completo
+    autoridad: z.string().optional(),          // Autoridad botánica (por ejemplo: "L." o "Lindl.")
+    descripcion: z.string().optional(),        // Descripción general del taxón
+    distribucion: z.string().optional(),       // Distribución geográfica
+    habitat: z.string().optional(),            // Tipo de hábitat habitual
+    usos: z.string().optional(),               // Usos conocidos
+    otros_nombres: z.string().optional(),      // Nombres comunes, locales o sinónimos
   }),
 });
 
 export const collections = {
   taxonomia,
 };
-
-

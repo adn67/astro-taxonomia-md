@@ -1,7 +1,7 @@
 ---
 
 import { getEntry } from 'astro:content';
-import { RANK_LABELS, type Rank } from '../utils/rankLabels';
+import { RANK_METADATA, type Rank } from '../utils/rankLabels';
 import { slugify } from '../utils/slugify';
 import type { CollectionEntry } from 'astro:content';
 
@@ -23,7 +23,7 @@ function buildPath(entry: CollectionEntry<'taxonomia'>) {
     <li><a href="/">Inicio</a></li>
     {parents.map((entry) => {
       // 'rank' ya tipado como Rank
-      const info = RANK_LABELS[entry.data.rank as Rank];
+      const info = RANK_METADATA[entry.data.rank as Rank];
       const label = info?.label ?? entry.data.rank;
       return (
         <li>
@@ -33,7 +33,7 @@ function buildPath(entry: CollectionEntry<'taxonomia'>) {
     })}
     <li>
       <span>
-        {RANK_LABELS[current.data.rank as Rank]?.label || current.data.rank}: {current.data.name}
+        {RANK_METADATA[current.data.rank as Rank]?.label || current.data.rank}: {current.data.name}
       </span>
     </li>
   </ul>

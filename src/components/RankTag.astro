@@ -1,13 +1,13 @@
 ---
 import type { Rank } from "../utils/rankLabels";
-import { RANK_LABELS } from '../utils/rankLabels';
+import { RANK_METADATA } from '../utils/rankLabels';
 
 interface Props {
   rank: Rank;
 }
 
 const { rank } = Astro.props;
-const metadata = RANK_LABELS[rank];
+const metadata = RANK_METADATA[rank];
 ---
 
 {metadata && (

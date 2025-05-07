@@ -1,14 +1,15 @@
 // src/utils/rankLabels.ts
+
 export type Rank = 'division' | 'orden' | 'familia' | 'genero' | 'especie';
 
-interface RankMetadata {
+export interface RankMetadata {
   label: string;
   short: string;
-  plural: string;    // <-- nueva propiedad
+  plural: string;
   color: string;
 }
 
-export const RANK_LABELS: Record<Rank, RankMetadata> = {
+export const RANK_METADATA: Record<Rank, RankMetadata> = {
   division: {
     label: 'División',
     short: 'Div.',
