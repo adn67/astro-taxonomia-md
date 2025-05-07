@@ -5,6 +5,7 @@ import RankTag from "../../../components/RankTag.astro";
 import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { slugify } from "../../../utils/slugify";
+import { RANK_LABELS, type Rank } from "../../../utils/rankLabels";
 
 // ---------------------------
 // 1) getStaticPaths: generar rutas estáticas solo para órdenes
@@ -77,6 +78,10 @@ const parentChain = buildParentChain(current);
 const children = allTaxa.filter(
   (t) => t.data.parent !== undefined && slugify(t.data.parent) === current.slug
 );
+
+// Si este nivel taxonómico tiene hijos, todos compartirán el mismo rank:
+const childRank = children[0]?.data.rank as Rank;
+const sublevelsLabel = childRank ? RANK_LABELS[childRank].plural : "Subniveles";
 ---
 
 <Layout title={current.data.name}>
@@ -105,7 +110,7 @@ const children = allTaxa.filter(
   {
     children.length > 0 && (
       <>
-        <h2>Subniveles</h2>
+        <h2>{sublevelsLabel}</h2>
         <ul>
           {children.map((child) => (
             <li>
