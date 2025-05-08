@@ -1,0 +1,111 @@
+---
+// src/components/TaxonDetails.astro
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  taxon: CollectionEntry<"taxonomia">;
+}
+
+const { taxon } = Astro.props;
+const { description, distribution, common_names, otros_nombres, references } =
+  taxon.data;
+---
+
+<section class="taxon-details">
+  {
+    description && (
+      <div class="section">
+        <h2>Descripción</h2>
+        <p>{description}</p>
+      </div>
+    )
+  }
+
+  {
+    distribution && (
+      <div class="section">
+        <h2>Distribución</h2>
+        <p>{distribution}</p>
+      </div>
+    )
+  }
+
+  {
+    common_names && common_names.length > 0 && (
+      <div class="section">
+        <h2>Nombres comunes</h2>
+        <ul>
+          {common_names.map((name) => (
+            <li>{name}</li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  {
+    otros_nombres && otros_nombres.length > 0 && (
+      <div class="section">
+        <h2>Otros nombres</h2>
+        <ul>
+          {otros_nombres.map((name: string) => (
+            <li>{name}</li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  {
+    references && references.length > 0 && (
+      <div class="section">
+        <h2>Referencias</h2>
+        <ul>
+          {references.map((ref) => (
+            <li>
+              <a href={ref.url} target="_blank" rel="noopener noreferrer">
+                {ref.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+</section>
+
+<style>
+  .taxon-details {
+    margin-top: 2rem;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #2f855a; /* verde sobrio */
+    border-bottom: 1px solid #c6f6d5;
+    padding-bottom: 0.25rem;
+  }
+
+  ul {
+    padding-left: 1.25rem;
+  }
+
+  ul li {
+    list-style-type: disc;
+    margin-bottom: 0.25rem;
+  }
+
+  a {
+    color: #2b6cb0;
+    text-decoration: none;
+  }
+
+  a: hov;
+</style>

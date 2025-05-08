@@ -1,12 +1,51 @@
 ---
-import { getEntry, getCollection } from "astro:content";
-import Layout from "../../../layouts/Layout.astro";
-import Breadcrumb from "../../../components/Breadcrumb.astro";
-import RankTag from "../../../components/RankTag.astro";
-import { RANK_METADATA, type Rank } from "../../../utils/rankLabels";
-import { slugify } from "../../../utils/slugify";
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import RankTag from '../../../components/RankTag.astro';
+import TaxonDetails from '../../../components/TaxonDetails.astro';
 
-import type { CollectionEntry } from "astro:content";
+import { getCollection, getEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+import { slugify } from '../../../utils/slugify';
+import { RANK_METADATA, type Rank } from '../../../utils/rankLabels';
+
+// 📌 Cargar todos los taxones una sola vez
+const allTaxa = await getCollection('taxonomia');
+
+// 📌 Obtener el slug actual desde la URL
+const { slug } = Astro.params as { slug: string };
+
+// 📌 Buscar el taxón correspondiente
+const current = await getEntry('taxonomia', slug);
+if (!current) {
+  throw new Error(`No se encontró el taxón con slug: ${slug}`);
+}
+
+// 📌 Reconstruir la cadena de padres jerárquicos
+const parentChain: CollectionEntry<'taxonomia'>[] = [];
+let parentSlug = current.data.parent ? slugify(current.data.parent) : null;
+
+while (parentSlug) {
+  const parent = allTaxa.find((t) => t.slug === parentSlug);
+  if (!parent) break;
+  parentChain.unshift(parent);
+  parentSlug = parent.data.parent ? slugify(parent.data.parent) : null;
+}
+
+// 📌 Filtrar hijos directos del taxón actual
+const children = allTaxa.filter(
+  (t) => t.data.parent && slugify(t.data.parent) === current.slug
+);
+
+// 📌 Determinar el rango siguiente para mostrar
+const currentRank = current.data.rank;
+const rankOrder = ['division', 'orden', 'familia', 'genero', 'especie'] as Rank[];
+
+const nextRankIndex = rankOrder.indexOf(currentRank) + 1;
+const nextRank = rankOrder[nextRankIndex];
+const nextRankLabel = nextRank ? RANK_METADATA[nextRank]?.plural : null;
+
 
 export async function getStaticPaths() {
   const entries = await getCollection("taxonomia");
@@ -17,141 +56,34 @@ export async function getStaticPaths() {
   }));
 }
 
-const { slug } = Astro.params;
-const current = await getEntry("taxonomia", slug);
-if (!current) throw new Error(`No se encontró el género con slug "${slug}"`);
-
-const all = await getCollection("taxonomia");
-const parent = current.data.parent
-  ? all.find((t) => slugify(t.data.name) === slugify(current.data.parent!))
-  : undefined;
-
-/* 
- Explicación del código anterior: estamos previendo la ocurrencia de un posible error, ya que current.data.parent puede ser undefined, pero slugify() espera recibir un string (no undefined), y no podemos pasarle undefined a una función que no puede manejarlo.
-
-Agregamos una verificación que controle que parent existe antes de aplicar slugify(). De esta manera, primero se evalúa all.find(...) solo si current.data.parent existe. Luego, una vez hecha la verificación, usamos ! para indicar a TypeScript que en ese contexto parent no será undefined
-  */
-const parentChain = buildParentChain(current, all);
-
-const children = all.filter(
-  (entry) => slugify(entry.data.parent || "") === current.slug
-);
-
-function buildParentChain(
-  entry: CollectionEntry<"taxonomia">,
-  all: CollectionEntry<"taxonomia">[]
-): CollectionEntry<"taxonomia">[] {
-  const chain: CollectionEntry<"taxonomia">[] = [];
-  let parentSlug = entry.data.parent ? slugify(entry.data.parent) : null;
-
-  while (parentSlug) {
-    const parentEntry = all.find((e) => e.slug === parentSlug);
-    if (!parentEntry) break;
-    chain.unshift(parentEntry);
-    parentSlug = parentEntry.data.parent
-      ? slugify(parentEntry.data.parent)
-      : null;
-  }
-
-  return chain;
-}
-
-const currentRank = current.data.rank as Rank;
-const nextRank = (
-  ["division", "orden", "familia", "genero", "especie"] as Rank[]
-)[
-  (["division", "orden", "familia", "genero", "especie"] as Rank[]).indexOf(
-    currentRank
-  ) + 1
-];
-const nextRankLabel = RANK_METADATA[nextRank]?.plural ?? "Subniveles";
 ---
 
 <Layout title={current.data.name}>
+  <!-- 🧭 Breadcrumb jerárquico -->
   <Breadcrumb current={current} parents={parentChain} />
 
-  <h1 class="text-3xl font-bold mb-2">
-    <RankTag rank={currentRank} />
-    {current.data.name}
-  </h1>
+  <!-- 🏷️ Título y etiqueta de rango -->
+  <h1>{current.data.name}</h1>
+  <RankTag rank={current.data.rank} />
 
-  <section class="mt-4 space-y-2">
-    {
-      current.data.nombre_cientifico && (
-        <p>
-          <strong>Nombre científico:</strong>{" "}
-          <em>{current.data.nombre_cientifico}</em>
-        </p>
-      )
-    }
-    {
-      current.data.autoridad && (
-        <p>
-          <strong>Autoridad:</strong> {current.data.autoridad}
-        </p>
-      )
-    }
-    {
-      current.data.descripcion && (
-        <p>
-          <strong>Descripción:</strong> {current.data.descripcion}
-        </p>
-      )
-    }
-    {
-      current.data.distribucion && (
-        <p>
-          <strong>Distribución:</strong> {current.data.distribucion}
-        </p>
-      )
-    }
-    {
-      current.data.habitat && (
-        <p>
-          <strong>Hábitat:</strong> {current.data.habitat}
-        </p>
-      )
-    }
-    {
-      current.data.usos && (
-        <p>
-          <strong>Usos:</strong> {current.data.usos}
-        </p>
-      )
-    }
-    {
-      current.data.otros_nombres && (
-        <p>
-          <strong>Otros nombres:</strong> {current.data.otros_nombres}
-        </p>
-      )
-    }
-    {
-      current.data.notes && (
-        <p>
-          <strong>Notas:</strong> {current.data.notes}
-        </p>
-      )
-    }
-  </section>
+  <!-- 🧾 Detalles del taxón -->
+    <TaxonDetails taxon={current} />
 
-  {
-    children.length > 0 && (
-      <section class="mt-8">
-        <h2 class="text-2xl font-semibold mb-2">{nextRankLabel}:</h2>
-        <ul class="list-disc list-inside space-y-1">
-          {children.map((child) => (
-            <li>
-              <a
-                class="text-blue-600 hover:underline"
-                href={`/taxonomia/${child.data.rank}/${child.slug}/`}
-              >
-                <RankTag rank={child.data.rank as Rank} /> {child.data.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
+
+  <!-- 🐣 Mostrar hijos si existen -->
+  {children.length > 0 && nextRankLabel && (
+    <>
+      <h2>{nextRankLabel}</h2>
+      <ul>
+        {children.map((child) => (
+          <li>
+            <a href={`/taxonomia/${child.data.rank}/${child.slug}`}>
+              {child.data.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
 </Layout>
+
