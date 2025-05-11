@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { taxon } = Astro.props;
-const { description, distribution, common_names, otros_nombres, references } =
+const { name, description, distribution, common_names, otros_nombres, references, image, notes } =
   taxon.data;
 ---
 
@@ -55,6 +55,25 @@ const { description, distribution, common_names, otros_nombres, references } =
       </div>
     )
   }
+
+
+{image && (
+  <img src={image} alt={`Imagen de ${name}`} style="max-width: 400px; margin: 1rem 0;" />
+)}
+
+
+{notes && (
+  <>
+    <h2>Notas</h2>
+    <p>{notes}</p>
+  </>
+)}
+
+<article class="markdown-body">
+  <div set:html={taxon.body} />
+</article>
+
+
 
   {
     references && references.length > 0 && (
