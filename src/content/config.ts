@@ -1,5 +1,5 @@
 // src/content/config.ts
-import { defineCollection, z } from 'astro:content';
+import { defineCollection, z } from "astro:content";
 
 const taxonomia = defineCollection({
   schema: z.object({
@@ -7,7 +7,7 @@ const taxonomia = defineCollection({
     name: z.string(),
 
     // Nivel jerárquico taxonómico
-    rank: z.enum(['division', 'orden', 'familia', 'genero', 'especie']),
+    rank: z.enum(["division", "orden", "familia", "genero", "especie"]),
 
     // Nombre del taxón padre (referencia al campo `name`, no al slug)
     parent: z.string().optional(),
@@ -24,14 +24,6 @@ const taxonomia = defineCollection({
     // Autor botánico (por ejemplo, "L." o "Mill.")
     autoridad: z.string().optional(),
 
-    // Fecha de creación (puede omitirse si no se usa)
-    author: z.string().optional(),
-    date: z.date().optional(),
-    updated: z.date().optional(),
-
-    // Ruta relativa de imagen ilustrativa (por ejemplo: "/images/pinus-sylvestris.jpg")
-    image: z.string().optional(),
-
     // Descripción detallada en texto plano o Markdown
     description: z.string().optional(),
 
@@ -44,13 +36,26 @@ const taxonomia = defineCollection({
     // Sinónimos u otros nombres locales
     otros_nombres: z.array(z.string()).optional(),
 
+    image: z.string().optional(), // imagen destacada
+
+    images: z
+      .array(
+        z.object({
+          src: z.string(),
+          alt: z.string(),
+        })
+      )
+      .optional(), // galería
+
     // Lista de referencias bibliográficas o enlaces externos
-    references: z.array(
-      z.object({
-        title: z.string(),
-        url: z.string().url(),
-      })
-    ).optional(),
+    references: z
+      .array(
+        z.object({
+          title: z.string(),
+          url: z.string().url(),
+        })
+      )
+      .optional(),
   }),
 });
 

@@ -1,17 +1,48 @@
 ---
-// src/components/TaxonDetails.astro
 import type { CollectionEntry } from "astro:content";
+import ImageGallery from "./ImageGallery.astro";
 
 interface Props {
-  taxon: CollectionEntry<"taxonomia">;
+  entry: CollectionEntry<"taxonomia">;
 }
-
-const { taxon } = Astro.props;
-const { name, description, distribution, common_names, otros_nombres, references, image, notes } =
-  taxon.data;
+const { entry } = Astro.props as Props;
+const {
+  nombre_cientifico,
+  autoridad,
+  description,
+  distribution,
+  common_names,
+  otros_nombres,
+  image,
+  images,
+  references,
+  notes,
+} = entry.data;
 ---
 
 <section class="taxon-details">
+  {
+    nombre_cientifico && (
+      <p>
+        <strong>Nombre científico:</strong> <em>{nombre_cientifico}</em>
+      </p>
+    )
+  }
+  {
+    autoridad && (
+      <p>
+        <strong>Autoridad:</strong> {autoridad}
+      </p>
+    )
+  }
+  {notes && <p>{notes}</p>}
+  {
+    image && (
+      <div class="featured">
+        <img src={image} alt={`Imagen de ${entry.data.name}`} />
+      </div>
+    )
+  }
   {
     description && (
       <div class="section">
@@ -20,7 +51,6 @@ const { name, description, distribution, common_names, otros_nombres, references
       </div>
     )
   }
-
   {
     distribution && (
       <div class="section">
@@ -29,60 +59,42 @@ const { name, description, distribution, common_names, otros_nombres, references
       </div>
     )
   }
-
   {
-    common_names && common_names.length > 0 && (
+    common_names && (
       <div class="section">
         <h2>Nombres comunes</h2>
         <ul>
-          {common_names.map((name) => (
-            <li>{name}</li>
+          {common_names.map((n: string) => (
+            <li>{n}</li>
           ))}
         </ul>
       </div>
     )
   }
-
   {
-    otros_nombres && otros_nombres.length > 0 && (
+    otros_nombres && (
       <div class="section">
         <h2>Otros nombres</h2>
         <ul>
-          {otros_nombres.map((name: string) => (
-            <li>{name}</li>
+          {otros_nombres.map((n: string) => (
+            <li>{n}</li>
           ))}
         </ul>
       </div>
     )
   }
 
-
-{image && (
-  <img src={image} alt={`Imagen de ${name}`} style="max-width: 400px; margin: 1rem 0;" />
-)}
-
-
-{notes && (
-  <>
-    <h2>Notas</h2>
-    <p>{notes}</p>
-  </>
-)}
-
-<article class="markdown-body">
-  <div set:html={taxon.body} />
-</article>
-
-
+  <!-- Galería de imágenes -->
+  {images && <ImageGallery images={images} />}
 
   {
-    references && references.length > 0 && (
+    references && (
       <div class="section">
         <h2>Referencias</h2>
         <ul>
-          {references.map((ref) => (
+          {references.map((ref: { title: string; url: string }) => (
             <li>
-              <a href={ref.url} target="_blank" rel="noopener noreferrer">
+              <a href={ref.url} target="_blank">
                 {ref.title}
               </a>
             </li>
@@ -95,36 +107,50 @@ const { name, description, distribution, common_names, otros_nombres, references
 
 <style>
   .taxon-details {
-    margin-top: 2rem;
+    margin: 2rem 0;
     font-size: 1rem;
     line-height: 1.6;
   }
-
+  .featured img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+  }
   .section {
     margin-bottom: 1.5rem;
   }
-
   .section h2 {
     font-size: 1.25rem;
+    color: #2f855a;
     margin-bottom: 0.5rem;
-    color: #2f855a; /* verde sobrio */
     border-bottom: 1px solid #c6f6d5;
     padding-bottom: 0.25rem;
   }
-
   ul {
-    padding-left: 1.25rem;
+    list-style: disc inside;
+    padding: 0;
   }
-
   ul li {
-    list-style-type: disc;
     margin-bottom: 0.25rem;
   }
-
   a {
     color: #2b6cb0;
     text-decoration: none;
   }
+  a:hover {
+    text-decoration: underline;
+  }
 
-  a: hov;
+  /* Cuerpo del archivo .md */
+
+  .markdown-content h2 {
+    margin-top: 1.5rem;
+    color: #2f855a;
+  }
+  .markdown-content p {
+    margin: 1rem 0;
+    line-height: 1.6;
+  }
 </style>

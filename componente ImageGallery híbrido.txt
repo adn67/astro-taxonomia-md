@@ -1,0 +1,150 @@
+
+Componente ImageGallery híbrido (para mostar imágenes internas o externas), con vista modal (lightbox) para ampliar imágenes al hacer clic
+
+
+Cómo usarlo:
+
+a) Imágenes locales (src/assets/images/):
+
+    import pinus from '../../../assets/images/pinus.jpg';
+    
+y luego en [slug].astro:
+    
+  <ImageGallery
+    images={[
+      { src: pinus, alt: 'Ejemplar de Pinus sylvestris' }
+    ]}
+  />  
+    
+    
+  Si no se indica type, asume "local" por defecto.  
+    
+  
+  
+b) Imágenes externas (desde una URL):
+
+en [slug].astro:
+
+  <ImageGallery
+    images={[
+      {
+        src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Pinus_sylvestris2.jpg/800px-Pinus_sylvestris2.jpg',
+        alt: 'Pinus sylvestris en hábitat natural',
+        type: 'external'
+      }
+    ]}
+  />
+
+
+
+  
+ ********************************************************
+ 
+ 
+ 
+ 
+ 
+    
+---
+// src/components/ImageGallery.astro
+import { Image } from 'astro:assets';
+
+// Puede ser una imagen local importada (ImageMetadata) o una URL externa (string)
+type GalleryImage = 
+  | { src: ImageMetadata; alt: string; type?: 'local' }
+  | { src: string; alt: string; type: 'external' };
+
+interface Props {
+  images: GalleryImage[];
+}
+
+const { images } = Astro.props as Props;
+---
+
+<section class="gallery">
+  <h2>Galería de imágenes</h2>
+  <div class="grid">
+    {images.map((img, i) => (
+      <figure id={`img-${i}`} class="thumb-container">
+        <a href={`#img-${i}`} class="thumb-link">
+          {img.type === 'external' ? (
+            <img src={img.src} alt={img.alt} loading="lazy" />
+          ) : (
+            <Image src={img.src} alt={img.alt} width={300} />
+          )}
+        </a>
+        <figcaption>{img.alt}</figcaption>
+        <a href="#" class="close">×</a>
+      </figure>
+    ))}
+  </div>
+</section>
+
+<style>
+.gallery { margin-top: 2rem; }
+.gallery h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #2f855a;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.thumb-container {
+  position: relative;
+  overflow: hidden;
+  background: #f8f8f8;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+.thumb-container img,
+.thumb-container .astro-Image {
+  width: 100%;
+  display: block;
+  transition: transform .2s ease;
+}
+.thumb-container:hover img,
+.thumb-container:hover .astro-Image {
+  transform: scale(1.05);
+}
+.thumb-container figcaption {
+  font-size: .875rem;
+  color: #555;
+  padding: .5rem 0;
+}
+
+/* Lightbox: cuando la figura está como target */
+.thumb-container:target {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.thumb-container:target img,
+.thumb-container:target .astro-Image {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 0.5rem;
+}
+
+/* Botón cerrar */
+.thumb-container .close {
+  position: absolute;
+  top: 1rem; right: 1rem;
+  font-size: 2rem;
+  color: white;
+  text-decoration: none;
+  line-height: 1;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  width: 2rem; height: 2rem;
+  display: flex; align-items: center; justify-content: center;
+}
+</style>
+

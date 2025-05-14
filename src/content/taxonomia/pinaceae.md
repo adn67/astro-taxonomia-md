@@ -3,9 +3,7 @@ name: Pinaceae
 rank: familia
 parent: Pinales
 slug: pinaceae
-author: ADN67
-date: 2025-05-07
-updated: 2025-05-07
+
 common_names:
   - Pinos verdaderos
   - Familia de los pinos

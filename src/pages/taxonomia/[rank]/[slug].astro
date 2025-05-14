@@ -1,0 +1,90 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import TaxonDetails from '../../../components/TaxonDetails.astro';
+import { getCollection, getEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { RANK_METADATA, type Rank } from '../../../utils/rankLabels';
+import "../../../styles/global.css"
+
+
+export async function getStaticPaths() {
+  const entries = await getCollection('taxonomia');
+  return entries.map((entry) => ({
+    params: {
+      rank: entry.data.rank,
+      slug: entry.slug,
+    },
+  }));
+}
+
+const { rank, slug } = Astro.params as { rank: Rank; slug: string };
+
+// Recupera la entrada actual
+const current = await getEntry('taxonomia', slug);
+if (!current) throw new Error(`No se encontró el taxón: ${slug}`);
+
+// Renderizamos el Markdown a un componente
+const rendered = await current.render();
+
+// Trae todas las entradas
+const allTaxa = await getCollection('taxonomia');
+
+// Encuentra sus hijos (subniveles)
+const children = allTaxa.filter(
+  (entry) =>
+    entry.data.parent &&
+    entry.data.parent.toLowerCase() === current.data.name.toLowerCase()
+);
+
+// Encuentra los padres jerárquicos para breadcrumb
+function buildParentChain(entry: CollectionEntry<'taxonomia'>) {
+  const chain: CollectionEntry<'taxonomia'>[] = [];
+  let parentName = entry.data.parent;
+  while (parentName) {
+    const parent = allTaxa.find(
+      (e) => e.data.name.toLowerCase() === parentName!.toLowerCase()
+    );
+    if (!parent) break;
+    chain.unshift(parent);
+    parentName = parent.data.parent;
+  }
+  return chain;
+}
+
+const parentChain = buildParentChain(current);
+
+// Calcula el subnivel siguiente (por ejemplo: si es "familia", el siguiente es "genero")
+const ranks: Rank[] = ['division', 'orden', 'familia', 'genero', 'especie'];
+const nextRank = ranks[ranks.indexOf(current.data.rank) + 1];
+---
+
+<Layout title={current.data.name}>
+  <Breadcrumb current={current} parents={parentChain} />
+
+  <h1>{current.data.name}</h1>
+
+  <TaxonDetails entry={current} />
+
+
+<!-- Aquí insertamos el Markdown procesado -->
+<article class="markdown-content">
+  <rendered.Content />
+</article>
+
+  {children.length > 0 && (
+    <>
+      <h2>{RANK_METADATA[nextRank]?.plural || 'Subniveles'}</h2>
+      <ul>
+        {children.map((child) => (
+          <li>
+            <a href={`/taxonomia/${child.data.rank}/${child.slug}`}>
+              {child.data.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
+</Layout>
+
