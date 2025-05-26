@@ -1,97 +1,108 @@
 ---
 // src/components/ImageGallery.astro
+import { Image } from 'astro:assets'; // Importa el componente Image de Astro
 import type { GalleryImage } from '../utils/galleryTypes';
 
 interface Props {
   images: GalleryImage[];
 }
-const { images } = Astro.props as Props;
+
+const { images } = Astro.props;
+
+// PhotoSwipe CSS y JS (se cargarán solo si este componente se renderiza)
+import 'photoswipe/dist/photoswipe.css';
+import PhotoSwipeLightbox from 'photoswipe/dist/photoswipe-lightbox.esm.js';
+
+// Convertir las imágenes a un formato que PhotoSwipe entienda
+const photoswipeItems = images.map(img => ({
+  src: img.src,
+  alt: img.alt,
+  width: img.width,
+  height: img.height,
+  msrc: img.thumbnailSrc || img.src, // Miniatura para PhotoSwipe si es diferente; si no, usa la principal
+}));
 ---
 
-{images.length > 0 && (
-  <>
-    <style>
-      .gallery {
-        display: grid;
-        // grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-        grid-template-columns: repeat(auto-fit,200px);
-        gap: 1rem;
-        margin: 2rem 0;
-      }
-      .gallery figure {
-        margin: 0;
-        cursor: pointer;
-        overflow: hidden;
-        border-radius: 8px;
-        position: relative;
-      }
-      .gallery img {
-        // width: 100%;
-        height: 200px;
-        object-fit: cover;
-        display: block;
-        transition: transform .3s ease;
-      }
-      .gallery figure:hover img {
-        transform: scale(1.05);
-      }
-      .gallery figcaption {
-        padding: .5rem;
-        background: rgba(255,255,255,0.9);
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        font-size: .9rem;
-        color: #333;
-      }
-
-      { /* Lightbox */ }
-      .lightbox {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.85);
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-      }
-      .lightbox:target {
-        display: flex;
-      }
-      .lightbox img {
-        max-width: 90vw;
-        max-height: 90vh;
-        border-radius: 8px;
-      }
-      .lightbox .close {
-        position: absolute;
-        top: 1rem; right: 1rem;
-        font-size: 2rem;
-        color: #fff;
-        text-decoration: none;
-      }
-    </style>
-
-    <h2>Galería de imágenes</h2>
-
-    <div class="gallery">
-      {images.map((img, i) => (
-        <figure>
-          <a href={`#img-${i}`}>
-            <img src={img.src} alt={img.alt} loading="lazy" />
-            <figcaption>{img.alt}</figcaption>
-          </a>
-        </figure>
+<div class="image-gallery">
+  {images.length > 0 ? (
+    <div class="gallery-grid">
+      {images.map((image, index) => (
+        <a
+          href={image.src}
+          data-pswp-width={image.width}
+          data-pswp-height={image.height}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="gallery-item"
+          data-pswp-srcset={`${image.src} ${image.width}w`}
+        >
+          <Image
+            src={image.thumbnailSrc || image.src} // Usa thumbnailSrc si existe; si no, la principal
+            alt={image.alt}
+            widths={[100, 200, 300]} // Tamaños para srcset de la miniatura
+            sizes="(max-width: 600px) 100px, 200px" // Responsive sizes para la miniatura
+            loading="lazy"
+            decoding="async"
+            class="thumbnail"
+          />
+        </a>
       ))}
     </div>
+  ) : (
+    <p>No hay imágenes para mostrar en la galería.</p>
+  )}
+</div>
 
-    {/* Lightbox targets */}
-    {images.map((img, i) => (
-      <div id={`img-${i}`} class="lightbox">
-        <a href="#" class="close">&times;</a>
-        <img src={img.src} alt={img.alt} />
-      </div>
-    ))}
-  </>
-)}
+<script is:inline>
+  // El script debe estar dentro de un bloque <script> con is:inline para que se ejecute en el cliente
+  // y después de que Astro haya montado el HTML.
+  // También se puede hacer como un script externo que importe PhotoSwipeLightbox.
+  document.addEventListener('astro:load', () => {
+    // Solo inicializa PhotoSwipe si hay elementos de galería
+    const galleryContainer = document.querySelector('.image-gallery .gallery-grid');
+    if (galleryContainer && galleryContainer.children.length > 0) {
+      const lightbox = new PhotoSwipeLightbox({
+        gallery: '.image-gallery .gallery-grid',
+        children: 'a',
+        pswpModule: () => import('photoswipe'), // Importa PhotoSwipe dinámicamente cuando se necesita
+      });
+      lightbox.init();
+    }
+  });
+</script>
+
+<style>
+  .image-gallery {
+    margin-top: 2rem;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Miniaturas responsivas */
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #f0f0f0; /* Un color de fondo para la galería */
+    border-radius: 8px;
+  }
+
+  .gallery-item {
+    display: block;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .gallery-item:hover {
+    transform: scale(1.03);
+  }
+
+  .thumbnail {
+    width: 100%;
+    height: 150px; /* Altura fija para las miniaturas, ajustar según sea necesario */
+    object-fit: cover; /* Asegura que la imagen cubra el espacio sin distorsionarse */
+    display: block; /* Elimina espacio extra debajo de la imagen */
+  }
+
+  /* Estilos específicos de PhotoSwipe se cargarán con 'photoswipe.css' */
+</style>
