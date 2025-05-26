@@ -1,15 +1,14 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import Breadcrumb from '../../../components/Breadcrumb.astro';
-import TaxonDetails from '../../../components/TaxonDetails.astro';
-import { getCollection, getEntry } from 'astro:content';
-import type { CollectionEntry } from 'astro:content';
-import { RANK_METADATA, type Rank } from '../../../utils/rankLabels';
-import "../../../styles/global.css"
-
+import Layout from "../../../layouts/Layout.astro";
+import Breadcrumb from "../../../components/Breadcrumb.astro";
+import TaxonDetails from "../../../components/TaxonDetails.astro";
+import { getCollection, getEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import { RANK_METADATA, type Rank } from "../../../utils/rankLabels";
+import "../../../styles/global.css";
 
 export async function getStaticPaths() {
-  const entries = await getCollection('taxonomia');
+  const entries = await getCollection("taxonomia");
   return entries.map((entry) => ({
     params: {
       rank: entry.data.rank,
@@ -21,14 +20,14 @@ export async function getStaticPaths() {
 const { rank, slug } = Astro.params as { rank: Rank; slug: string };
 
 // Recupera la entrada actual
-const current = await getEntry('taxonomia', slug);
+const current = await getEntry("taxonomia", slug);
 if (!current) throw new Error(`No se encontró el taxón: ${slug}`);
 
 // Renderizamos el Markdown a un componente
 const rendered = await current.render();
 
 // Trae todas las entradas
-const allTaxa = await getCollection('taxonomia');
+const allTaxa = await getCollection("taxonomia");
 
 // Encuentra sus hijos (subniveles)
 const children = allTaxa.filter(
@@ -38,8 +37,8 @@ const children = allTaxa.filter(
 );
 
 // Encuentra los padres jerárquicos para breadcrumb
-function buildParentChain(entry: CollectionEntry<'taxonomia'>) {
-  const chain: CollectionEntry<'taxonomia'>[] = [];
+function buildParentChain(entry: CollectionEntry<"taxonomia">) {
+  const chain: CollectionEntry<"taxonomia">[] = [];
   let parentName = entry.data.parent;
   while (parentName) {
     const parent = allTaxa.find(
@@ -55,7 +54,7 @@ function buildParentChain(entry: CollectionEntry<'taxonomia'>) {
 const parentChain = buildParentChain(current);
 
 // Calcula el subnivel siguiente (por ejemplo: si es "familia", el siguiente es "genero")
-const ranks: Rank[] = ['division', 'orden', 'familia', 'genero', 'especie'];
+const ranks: Rank[] = ["division", "orden", "familia", "genero", "especie"];
 const nextRank = ranks[ranks.indexOf(current.data.rank) + 1];
 ---
 
@@ -66,25 +65,45 @@ const nextRank = ranks[ranks.indexOf(current.data.rank) + 1];
 
   <TaxonDetails entry={current} />
 
+  <!-- Aquí insertamos el Markdown procesado -->
+  <article class="markdown-content">
+    <rendered.Content />
+  </article>
 
-<!-- Aquí insertamos el Markdown procesado -->
-<article class="markdown-content">
-  <rendered.Content />
-</article>
-
-  {children.length > 0 && (
-    <>
-      <h2>{RANK_METADATA[nextRank]?.plural || 'Subniveles'}</h2>
-      <ul>
-        {children.map((child) => (
+  {
+    children.length > 0 && (
+      <>
+        <h2>{RANK_METADATA[nextRank]?.plural || "Subniveles"}</h2>
+        <ul class="children-list">
+          {
+            children
+              .slice() // copia para no mutar el array original
+              .sort((a, b) => a.data.name.localeCompare(b.data.name)) // orden alfabético
+              .map((child) => (
           <li>
             <a href={`/taxonomia/${child.data.rank}/${child.slug}`}>
               {child.data.name}
             </a>
           </li>
-        ))}
-      </ul>
-    </>
-  )}
+              ))
+          }
+        </ul>
+      </>
+    )
+  }
 </Layout>
 
+<style>
+  .children-list {
+    list-style: disc;
+    margin-left: 1.5rem;
+    margin-top: -1rem;
+  }
+  .children-list li {
+    font-size: 1.2rem;
+  }
+  .children-list,
+  article {
+    padding-bottom: 30px;
+  }
+</style>
